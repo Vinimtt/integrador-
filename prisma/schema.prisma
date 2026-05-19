@@ -1,0 +1,104 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider             = "prisma-client-py"
+  recursive_type_depth = 5
+}
+
+model Horario {
+  id             Int    @id @default(autoincrement())
+  dia_semana     String
+  horario_inicio String
+  horario_fim    String
+  aulas          Aula[]
+}
+
+model Aula {
+  id            Int         @id @default(autoincrement())
+  id_turma      Int
+  id_disciplina Int
+  id_professor  Int
+  id_sala       Int?
+  id_horario    Int?
+
+  turma         Turma       @relation(fields: [id_turma], references: [id])
+  disciplina    Disciplina  @relation(fields: [id_disciplina], references: [id])
+  professor     Professor   @relation(fields: [id_professor], references: [id])
+  sala          Sala?       @relation(fields: [id_sala], references: [id])
+  horario       Horario?    @relation(fields: [id_horario], references: [id])
+}
+
+model Professor {
+  id              Int                   @id @default(autoincrement())
+  nome            String
+  email           String                @unique
+  disponibilidade Boolean
+  
+  turmas          ProfessorTurma[]
+  disciplinas     ProfessorDisciplina[]
+  aulas           Aula[]
+}
+
+model Disciplina {
+  id                  Int                   @id @default(autoincrement())
+  nome                String
+  codigo              String                @unique
+  carga_horaria       Int
+  periodo_recomendado Int
+  
+  professores         ProfessorDisciplina[]
+  turmas              TurmaDisciplina[]
+  aulas               Aula[]
+}
+
+model Turma {
+  id          Int               @id @default(autoincrement())
+  nome        String
+  semestre    String
+  id_sala     Int
+  
+  sala        Sala              @relation(fields: [id_sala], references: [id])
+  professores ProfessorTurma[]
+  disciplinas TurmaDisciplina[]
+  aulas       Aula[]
+}
+
+model Sala {
+  id         Int     @id @default(autoincrement())
+  numero     String  @unique
+  capacidade Int
+  recursos   String?
+  
+  turmas     Turma[]
+  aulas      Aula[]
+}
+
+model ProfessorTurma {
+  id_professor Int
+  id_turma     Int
+  professor    Professor @relation(fields: [id_professor], references: [id])
+  turma        Turma     @relation(fields: [id_turma], references: [id])
+
+  @@id([id_professor, id_turma])
+}
+
+model ProfessorDisciplina {
+  id_professor  Int
+  id_disciplina Int
+  professor     Professor  @relation(fields: [id_professor], references: [id])
+  disciplina    Disciplina @relation(fields: [id_disciplina], references: [id])
+
+  @@id([id_professor, id_disciplina])
+}
+
+model TurmaDisciplina {
+  id_turma      Int
+  id_disciplina Int
+  turma         Turma      @relation(fields: [id_turma], references: [id])
+  disciplina    Disciplina @relation(fields: [id_disciplina], references: [id])
+
+  @@id([id_turma, id_disciplina])
+}
